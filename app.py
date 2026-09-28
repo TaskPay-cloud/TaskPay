@@ -1979,7 +1979,7 @@ if __name__ == "__main__":
     # reaches an error page run arbitrary Python, and reloader/tracebacks
     # leak source and config. Only turn it on for local development.
     debug_mode = env("FLASK_DEBUG", "0") == "1"
-    port = int(env("PORT", "5000"))
+    port = int(env("PORT", "3000"))
     if debug_mode:
         logger.warning("Starting with FLASK_DEBUG=1 -- do not use this in production.")
     app.run(debug=debug_mode, host="0.0.0.0", port=port)
