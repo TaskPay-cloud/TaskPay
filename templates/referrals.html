@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Referrals — TaskPay{% endblock %}
+{% block content %}
+<section class="tasks">
+    <h2>Refer friends, earn {{ commission_pct }}%</h2>
+    <p class="hint">Share your link. When someone signs up through it, you earn {{ commission_pct }}% of everything they earn on TaskPay &mdash; on top of your own earnings, forever. Commissions apply from the public launch date onward.</p>
+
+    <div class="stat-card" style="margin:16px 0;">
+        <span class="label">Your referral link</span>
+        <div class="ref-link-row">
+            <input type="text" id="ref-link" value="{{ referral_link }}" readonly>
+            <button type="button" onclick="copyRefLink()">Copy</button>
+        </div>
+    </div>
+
+    <div class="dash-top">
+        <div class="stat-card">
+            <span class="label">This month's referral commissions</span>
+            <span class="value">{{ money(this_month_earned, user) }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="label">All-time referral commissions</span>
+            <span class="value">{{ money(total_earned, user) }}</span>
+        </div>
+    </div>
+</section>
+
+<section class="history">
+    <h2>People you've referred ({{ referred_users|length }})</h2>
+    {% if referred_users %}
+    <table>
+        <tr><th>Username</th><th>Joined</th></tr>
+        {% for u in referred_users %}
+        <tr><td>{{ u.username }}</td><td>{{ u.created_at }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No referrals yet &mdash; share your link above to start earning {{ commission_pct }}% on top of your own tasks.</p>
+    {% endif %}
+</section>
+
+<script>
+function copyRefLink() {
+    const input = document.getElementById("ref-link");
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).catch(() => document.execCommand("copy"));
+}
+</script>
+{% endblock %}

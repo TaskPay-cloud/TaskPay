@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Payout account — TaskPay{% endblock %}
+{% block content %}
+<section class="auth-box">
+    <h2>{{ t('payout.title') }}</h2>
+    <p class="hint">{{ t('payout.sub') }}</p>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    {% if success %}<p class="banner">{{ success }}</p>{% endif %}
+
+    {% if user.account_name %}
+        <p class="banner">Currently on file: <strong>{{ user.account_name }}</strong> &mdash; {{ user.bank_name }} ({{ user.account_number }})</p>
+    {% endif %}
+
+    <form method="post" id="payout-form">
+        <label>Currency</label>
+        <select name="currency" id="currency">
+            {% for code, info in currencies.items() %}
+            <option value="{{ code }}" {{ 'selected' if code == selected_currency else '' }}>{{ info.label }}</option>
+            {% endfor %}
+        </select>
+        <p class="hint" id="rate-hint">Your balance is shown in this currency and converts at the live rate.</p>
+
+        <label id="bank-label">{{ t('payout.bank_label') }} ({{ country_label }})</label>
+        <select name="bank_code" id="bank_code">
+            <option value="">Loading&hellip;</option>
+        </select>
+
+        <label>{{ t('payout.account_label') }}</label>
+        <input type="text" name="account_number" id="account_number" inputmode="numeric">
+
+        <p id="resolve-status" class="hint"></p>
+        <p id="manual-note" class="hint" style="display:none;">Payouts to this method are sent manually after each cycle clears.</p>
+
+        <input type="hidden" name="bank_name" id="bank_name">
+
+        <button type="submit" class="cta">{{ t('payout.save') }}</button>
+    </form>
+</section>
+
+<script>
+(function () {
+    var bankSelect = document.getElementById('bank_code');
+    var bankNameField = document.getElementById('bank_name');
+    var acctInput = document.getElementById('account_number');
+    var resolveStatus = document.getElementById('resolve-status');
+    var manualNote = document.getElementById('manual-note');
+    var currencySelect = document.getElementById('currency');
+    var rateHint = document.getElementById('rate-hint');
+    var isManual = false;
+
+    function showRate() {
+        fetch("{{ url_for('api_rates') }}")
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                var rates = d.rates || {};
+                var cur = currencySelect.value;
+                var tag = d.live ? ' (live rate)' : ' (approximate rate)';
+                if (cur === 'USD') {
+                    rateHint.textContent = '1 USD = ' + Math.round(rates.NGN).toLocaleString() + ' NGN = ' + Math.round(rates.XOF).toLocaleString() + ' CFA' + tag;
+                } else {
+                    rateHint.textContent = '1 USD = ' + Math.round(rates[cur]).toLocaleString() + ' ' + (cur === 'XOF' ? 'CFA' : cur) + tag;
+                }
+            })
+            .catch(function () {});
+    }
+    currencySelect.addEventListener('change', showRate);
+    showRate();
+
+    // Nigerian banks come from Paystack's full live list (all pages);
+    // other countries get a mobile-money / bank list to pick from.
+    fetch("{{ url_for('api_paystack_banks') }}")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var banks = data.banks || [];
+            isManual = !!data.manual;
+            bankSelect.innerHTML = '';
+            var ph = document.createElement('option');
+            ph.value = '';
+            if (banks.length) {
+                ph.textContent = isManual ? 'Select mobile money or bank' : 'Select your bank';
+            } else if (data.has_key === false) {
+                ph.textContent = 'Bank list unavailable: add PAYSTACK_SECRET_KEY to .env, then restart';
+            } else {
+                ph.textContent = 'No banks found for your country';
+            }
+            bankSelect.appendChild(ph);
+            banks.forEach(function (bank) {
+                var opt = document.createElement('option');
+                opt.value = bank.code;
+                opt.textContent = bank.name;
+                opt.dataset.name = bank.name;
+                bankSelect.appendChild(opt);
+            });
+            if (isManual) {
+                acctInput.placeholder = 'Phone / account number';
+                manualNote.style.display = 'block';
+            } else {
+                acctInput.maxLength = 10;
+                acctInput.placeholder = '10-digit account number';
+            }
+        })
+        .catch(function () {
+            bankSelect.innerHTML = '<option value="">Could not load banks</option>';
+        });
+
+    function tryResolve() {
+        var opt = bankSelect.options[bankSelect.selectedIndex];
+        bankNameField.value = opt ? (opt.dataset.name || '') : '';
+        if (isManual) { resolveStatus.textContent = ''; return; }
+
+        var bankCode = bankSelect.value;
+        var acct = acctInput.value.trim();
+        if (!bankCode || acct.length !== 10) {
+            resolveStatus.textContent = '';
+            return;
+        }
+        resolveStatus.textContent = 'Checking account…';
+
+        var body = new URLSearchParams();
+        body.append('account_number', acct);
+        body.append('bank_code', bankCode);
+
+        fetch("{{ url_for('api_paystack_resolve_account') }}", { method: 'POST', body: body })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                resolveStatus.textContent = data.ok ? ('Account name: ' + data.account_name)
+                                                    : (data.error || 'Could not verify that account.');
+            })
+            .catch(function () {
+                resolveStatus.textContent = 'Could not verify that account right now.';
+            });
+    }
+
+    bankSelect.addEventListener('change', tryResolve);
+    acctInput.addEventListener('blur', tryResolve);
+
+    document.getElementById('payout-form').addEventListener('submit', function () {
+        var opt = bankSelect.options[bankSelect.selectedIndex];
+        bankNameField.value = opt ? (opt.dataset.name || '') : '';
+    });
+})();
+</script>
+{% endblock %}

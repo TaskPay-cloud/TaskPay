@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}TaskPay — Earn by completing tasks{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Complete tasks. Get paid once the cycle closes.</h1>
+    <p>The more tasks you complete, the bigger your payout &mdash; released once that month's earnings are fully confirmed.</p>
+    <a class="cta big" href="{{ url_for('register') }}">Start earning</a>
+</section>
+<section class="launch-banner">
+    <span class="label">Public rewards launch in</span>
+    <div id="launch-countdown" class="countdown" data-target="{{ launch_date_iso }}">--d --h --m --s</div>
+    <p class="hint">Every task you complete right now still counts toward your balance &mdash; the more you've stacked up by launch day, the bigger your first payout.</p>
+</section>
+<section class="how">
+    <div class="card">
+        <h3>1. Do tasks</h3>
+        <p>Pick from available tasks and complete them. Each one adds to your monthly balance.</p>
+    </div>
+    <div class="card">
+        <h3>2. Cycle closes</h3>
+        <p>Your dashboard counts down to the end of the month, when that cycle's tasks get tallied up.</p>
+    </div>
+    <div class="card">
+        <h3>3. Get paid</h3>
+        <p>Payouts release once the cycle's earnings have cleared &mdash; usually within days, sometimes a couple of weeks.</p>
+    </div>
+</section>
+{% endblock %}

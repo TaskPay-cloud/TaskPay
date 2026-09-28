@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Offers — TaskPay{% endblock %}
+{% block content %}
+<section class="tasks">
+    <h2>Earn from offer providers</h2>
+    <p class="hint">These walls refresh constantly with new offers &mdash; complete as many as you like, there's no cap. Each one credits your TaskPay balance automatically once the provider confirms it, usually within minutes.</p>
+
+    <div class="task-grid">
+        {% for p in provider_links %}
+        <div class="task-card">
+            <h3>{{ p.label }}</h3>
+            <p>Opens {{ p.label }}'s offer wall in a new tab, tagged to your account so completed offers credit you.</p>
+            <div class="task-footer">
+                <a class="cta" href="{{ p.url }}" target="_blank" rel="noopener">Open offers</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

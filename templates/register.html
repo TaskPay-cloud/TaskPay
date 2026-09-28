@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Sign up — TaskPay{% endblock %}
+{% block content %}
+<section class="auth-box">
+    <h2>{{ t('register.title') }}</h2>
+    <p class="hint">{{ t('register.reward_note') }}</p>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <a class="cta outline" style="display:block; text-align:center; margin-bottom:14px;"
+       href="{{ url_for('google_login', ref=ref_code) if ref_code else url_for('google_login') }}">{{ t('register.google') }}</a>
+    <p class="divider">{{ t('register.or') }}</p>
+    <form method="post">
+        <label>{{ t('register.username_label') }}</label>
+        <input type="text" name="username" required>
+        <label>{{ t('register.email_label') }}</label>
+        <input type="email" name="email" required>
+        <label>{{ t('register.password_label') }}</label>
+        <input type="password" name="password" required minlength="6">
+        <label>{{ t('register.ref_label') }}</label>
+        <input type="text" name="ref_code" value="{{ ref_code or '' }}" placeholder="{{ t('register.ref_placeholder') }}">
+
+        <label>{{ t('register.country_label') }}</label>
+        <select name="country" id="country-select">
+            {% for key, cfg in countries.items() %}
+            <option value="{{ key }}" {{ 'selected' if key == default_country else '' }}>{{ cfg.label }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Currency</label>
+        <select name="currency" id="currency-select">
+            {% for code, info in currencies.items() %}
+            <option value="{{ code }}" {{ 'selected' if code == default_currency else '' }}>{{ info.label }}</option>
+            {% endfor %}
+        </select>
+        <p class="hint" id="rate-hint">Your balance is shown in this currency and converts at the live rate.</p>
+
+        <p class="hint" style="margin-top:10px;">{{ t('register.bank_section_title') }} — {{ t('register.bank_section_hint') }}</p>
+        <label>{{ t('register.bank_label') }}</label>
+        <select name="bank_code" id="bank-select">
+            <option value="">{{ t('register.bank_placeholder') }}</option>
+        </select>
+        <input type="hidden" name="bank_name" id="bank-name-input">
+        <label>{{ t('register.account_label') }}</label>
+        <input type="text" name="account_number" id="account-number-input" inputmode="numeric">
+
+        <button type="submit" class="cta">{{ t('register.submit') }}</button>
+    </form>
+    <p>{{ t('register.have_account') }} <a href="{{ url_for('login') }}">{{ t('register.login_link') }}</a></p>
+</section>
+<script>
+(function () {
+    var countrySelect = document.getElementById('country-select');
+    var currencySelect = document.getElementById('currency-select');
+    var bankSelect = document.getElementById('bank-select');
+    var bankNameInput = document.getElementById('bank-name-input');
+    var acctInput = document.getElementById('account-number-input');
+    var rateHint = document.getElementById('rate-hint');
+    var endpoint = "{{ url_for('api_public_banks') }}";
+    var countryCurrency = { {% for key, cfg in countries.items() %}"{{ key }}": "{{ cfg.currency }}"{{ "," if not loop.last }}{% endfor %} };
+    var userPickedCurrency = false;
+
+    function showRate() {
+        fetch("{{ url_for('api_rates') }}")
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                var rates = d.rates || {};
+                var cur = currencySelect.value;
+                if (cur === 'USD') {
+                    rateHint.textContent = '1 USD = ' + Math.round(rates.NGN).toLocaleString() + ' NGN = ' + Math.round(rates.XOF).toLocaleString() + ' CFA' + (d.live ? ' (live rate)' : ' (approximate rate)');
+                } else {
+                    rateHint.textContent = '1 USD = ' + Math.round(rates[cur]).toLocaleString() + ' ' + (cur === 'XOF' ? 'CFA' : cur) + (d.live ? ' (live rate)' : ' (approximate rate)');
+                }
+            })
+            .catch(function () {});
+    }
+
+    function loadBanks(country) {
+        bankSelect.innerHTML = '<option value="">Loading…</option>';
+        fetch(endpoint + '?country=' + encodeURIComponent(country))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var banks = (data && data.banks) || [];
+                bankSelect.innerHTML = '';
+                var placeholder = document.createElement('option');
+                placeholder.value = '';
+                if (banks.length) {
+                    placeholder.textContent = "{{ t('register.bank_placeholder') }}";
+                } else if (data && data.has_key === false) {
+                    placeholder.textContent = 'Bank list unavailable: add PAYSTACK_SECRET_KEY to .env, then restart';
+                } else {
+                    placeholder.textContent = 'No banks found for this country';
+                }
+                bankSelect.appendChild(placeholder);
+                banks.forEach(function (b) {
+                    var opt = document.createElement('option');
+                    opt.value = b.code;
+                    opt.textContent = b.name;
+                    opt.dataset.name = b.name;
+                    bankSelect.appendChild(opt);
+                });
+                bankNameInput.value = '';
+                acctInput.placeholder = data.manual ? 'Mobile money / account number' : '';
+                acctInput.removeAttribute('maxlength');
+            })
+            .catch(function () {
+                bankSelect.innerHTML = '<option value="">Could not load banks</option>';
+            });
+    }
+
+    bankSelect.addEventListener('change', function () {
+        var opt = bankSelect.options[bankSelect.selectedIndex];
+        bankNameInput.value = (opt && opt.dataset.name) || '';
+    });
+
+    currencySelect.addEventListener('change', function () {
+        userPickedCurrency = true;
+        showRate();
+    });
+
+    countrySelect.addEventListener('change', function () {
+        loadBanks(countrySelect.value);
+        if (!userPickedCurrency && countryCurrency[countrySelect.value]) {
+            currencySelect.value = countryCurrency[countrySelect.value];
+            showRate();
+        }
+    });
+
+    loadBanks(countrySelect.value);
+    showRate();
+})();
+</script>
+{% endblock %}
