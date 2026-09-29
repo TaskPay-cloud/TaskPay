@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav.dashboard') }} — TaskPay{% endblock %}
+{% block content %}
+<script>
+window.I18N = {{ {
+    "network": t('js.network'),
+    "sent": t('js.sent'),
+    "could_not_send": t('js.could_not_send'),
+    "could_not_complete": t('js.could_not_complete'),
+    "could_not_update": t('js.could_not_update'),
+    "completed": t('js.completed'),
+    "payout_day": t('js.payout_day'),
+    "its_here": t('js.its_here'),
+    "unit_d": "d" if current_lang == "en" else "j",
+    "unit_h": "h",
+    "unit_m": "m" if current_lang == "en" else "min",
+    "unit_s": "s"
+}|tojson }};
+</script>
+{% if not user.email_confirmed %}
+<section class="banner" id="confirm-banner">
+    {{ t('dash.confirm_banner') }}
+    <button type="button" onclick="resendConfirmation()" style="margin-left:10px;">{{ t('dash.resend') }}</button>
+</section>
+{% endif %}
+
+<div class="tabbar" role="tablist">
+    <button class="tab-btn active" data-tab="overview" role="tab" aria-selected="true">{{ t('tab.overview') }}</button>
+    <button class="tab-btn" data-tab="tasks" role="tab" aria-selected="false">{{ t('tab.tasks') }}</button>
+    <button class="tab-btn" data-tab="history" role="tab" aria-selected="false">{{ t('tab.history') }}</button>
+</div>
+
+<div class="tab-panel active" id="tab-overview">
+    <section class="dash-top">
+        <div class="stat-card">
+            <span class="label">{{ t('dash.this_month') }}</span>
+            <span class="value">{{ money(total_earned, user) }}</span>
+            <span class="sub alt-money">&asymp; {{ money_others(total_earned, user) }}</span>
+            <span class="sub">{{ t('dash.tasks_completed', n=task_count) }}</span>
+            <span class="sub rate-line" id="rate-line">{{ t('dash.rate_loading') }}</span>
+        </div>
+        <div class="stat-card countdown-card">
+            <span class="label">{{ t('dash.cycle_closes') }}</span>
+            <div id="countdown" class="countdown" data-target="month-end">--{{ "d" if current_lang == "en" else "j" }} --h --{{ "m" if current_lang == "en" else "min" }} --s</div>
+            <span class="sub">
+                {% if cycle_status == 'paid' %}{{ t('dash.cycle_paid') }}
+                {% elif cycle_status == 'cleared' %}{{ t('dash.cycle_cleared') }}
+                {% else %}{{ t('dash.cycle_pending') }}{% endif %}
+            </span>
+        </div>
+    </section>
+
+    <section class="launch-banner-section">
+        <span class="label">{{ t('dash.launch_in') }}</span>
+        <div id="launch-countdown" class="countdown" data-target="{{ launch_date_iso }}">--{{ "d" if current_lang == "en" else "j" }} --h --{{ "m" if current_lang == "en" else "min" }} --s</div>
+        <p class="hint">{{ t('dash.launch_hint') }}</p>
+    </section>
+
+    <section class="tip">
+        <p>{{ t('dash.tip_a') }}<a href="{{ url_for('referrals') }}">{{ t('dash.tip_link') }}</a>{{ t('dash.tip_b') }}</p>
+    </section>
+</div>
+
+<div class="tab-panel" id="tab-tasks">
+    <section class="tasks">
+        <h2>{{ t('dash.available_tasks') }}</h2>
+        {% if tasks %}
+        <div class="task-grid">
+            {% for task in tasks %}
+            <div class="task-card" id="task-{{ task.id }}">
+                <h3>{{ task.title }}</h3>
+                <p>{{ task.description }}</p>
+                <div class="task-footer">
+                    <span class="reward">{{ money(task.reward, user) }}</span>
+                    {% if task.id in completed_task_ids and not task.repeatable %}
+                        <button disabled>{{ t('dash.completed') }}</button>
+                    {% else %}
+                        <button onclick="completeTask({{ task.id }})">{{ t('dash.mark_complete') }}</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>{{ t('dash.no_tasks') }}</p>
+        {% endif %}
+    </section>
+</div>
+
+<div class="tab-panel" id="tab-history">
+    <section class="history">
+        <h2>{{ t('dash.history_title') }}</h2>
+        {% if past_payouts %}
+        <table>
+            <tr><th>{{ t('dash.col_month') }}</th><th>{{ t('dash.col_source') }}</th><th>{{ t('dash.col_amount') }}</th><th>{{ t('dash.col_paid_at') }}</th></tr>
+            {% for p in past_payouts %}
+            <tr><td>{{ p.month_key }}</td><td>{{ public_source(p.source) }}</td><td>{% if p.amount_local is not none and p.currency %}{{ local_money(p.amount_local, p.currency) }}{% else %}{{ money(p.amount, user) }}{% endif %}</td><td>{{ p.paid_at }}</td></tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>{{ t('dash.no_payouts') }}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

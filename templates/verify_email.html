@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ t('verify.title') }} — TaskPay{% endblock %}
+{% block content %}
+<div class="auth-box">
+    <h2>{{ t('verify.title') }}</h2>
+    <p class="hint">{{ t('verify.sub', email=email) }}</p>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    {% if notice %}<p class="success">{{ notice }}</p>{% endif %}
+
+    <form method="post" action="{{ url_for('verify_email') }}" autocomplete="off">
+        <label for="code">{{ t('verify.code_label') }}</label>
+        <input id="code" name="code" class="code-input" type="text" inputmode="numeric"
+               pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="••••••" required autofocus>
+        <button type="submit">{{ t('verify.submit') }}</button>
+    </form>
+
+    <form method="post" action="{{ url_for('verify_email_resend') }}">
+        <button type="submit" class="cta outline" id="resend-btn" {% if resend_in %}disabled{% endif %}>{{ t('verify.resend') }}</button>
+        <p class="hint" id="resend-hint" {% if not resend_in %}style="display:none"{% endif %}>{{ t('verify.resend_wait', s=resend_in) }}</p>
+    </form>
+
+    <p class="hint">{{ t('verify.hint', minutes=minutes) }}</p>
+    <p class="hint">{{ t('verify.wrong_email') }} <a href="{{ url_for('register') }}">{{ t('verify.start_again') }}</a></p>
+</div>
+{% if resend_in %}
+<script>
+(function () {
+    var left = {{ resend_in }};
+    var btn = document.getElementById("resend-btn");
+    var hint = document.getElementById("resend-hint");
+    var template = {{ t('verify.resend_wait', s='__S__')|tojson }};
+    var timer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+            clearInterval(timer);
+            btn.disabled = false;
+            hint.style.display = "none";
+            return;
+        }
+        hint.textContent = template.replace("__S__", left);
+    }, 1000);
+})();
+</script>
+{% endif %}
+{% endblock %}
