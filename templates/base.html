@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+<script src="https://quge5.com/88/tag.min.js" data-zone="289191" async data-cfasync="false"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}TaskPay{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if not session.lang_chosen %}
+<div id="lang-chooser">
+    <div class="lang-card">
+        <h3><span class="lang-title-en">Choose your language</span></h3>
+        <p class="lang-sub-en">Pick English or Français — this changes the whole app.</p>
+        <p class="lang-sub-fr">Choisissez Français ou English — cela change toute l'application.</p>
+        <div class="lang-options">
+            <form method="post" action="{{ url_for('set_language', lang='en') }}">
+                <button type="submit" class="lang-btn">English</button>
+            </form>
+            <form method="post" action="{{ url_for('set_language', lang='fr') }}">
+                <button type="submit" class="lang-btn">Français</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Preview animation only -- doesn't set the real language, just shows
+    // the user what French looks like 5s in, to nudge them to pick.
+    setTimeout(function () {
+        var chooser = document.getElementById('lang-chooser');
+        if (chooser) chooser.classList.add('previewing');
+    }, 5000);
+</script>
+{% endif %}
+<div class="launch-banner">{{ t('launch.banner', date=t('launch.date_label')) }}</div>
+<header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">Task<span>Pay</span></a>
+    <nav>
+        {% if session.user_id %}
+            {% if session.is_admin %}
+                <a href="{{ url_for('admin_dashboard') }}">{{ t('nav.admin') }}</a>
+            {% else %}
+                <a href="{{ url_for('dashboard') }}">{{ t('nav.dashboard') }}</a>
+                <a href="{{ url_for('referrals') }}">{{ t('nav.referrals') }}</a>
+                <a href="{{ url_for('payout_setup') }}">{{ t('nav.payout_account') }}</a>
+                <a href="{{ url_for('settings') }}">{{ t('nav.settings') }}</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">{{ t('nav.logout') }}</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">{{ t('nav.login') }}</a>
+            <a class="cta" href="{{ url_for('register') }}">{{ t('nav.signup') }}</a>
+        {% endif %}
+        <form method="post" action="{{ url_for('set_language', lang='fr' if current_lang == 'en' else 'en') }}" style="display:inline;">
+            <button type="submit" class="lang-toggle">{{ 'FR' if current_lang == 'en' else 'EN' }}</button>
+        </form>
+    </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer class="footer">{{ t('footer.tagline') }}</footer>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
