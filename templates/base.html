@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}TaskPay{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if not session.lang_chosen %}
+<div id="lang-chooser">
+    <div class="lang-card">
+        <h3><span class="lang-title-en">Choose your language</span></h3>
+        <p class="lang-sub-en">Pick English or Français — this changes the whole app.</p>
+        <p class="lang-sub-fr">Choisissez Français ou English — cela change toute l'application.</p>
+        <div class="lang-options">
+            <form method="post" action="{{ url_for('set_language', lang='en') }}">
+                <button type="submit" class="lang-btn">English</button>
+            </form>
+            <form method="post" action="{{ url_for('set_language', lang='fr') }}">
+                <button type="submit" class="lang-btn">Français</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Preview animation only -- doesn't set the real language, just shows
+    // the user what French looks like 5s in, to nudge them to pick.
+    setTimeout(function () {
+        var chooser = document.getElementById('lang-chooser');
+        if (chooser) chooser.classList.add('previewing');
+    }, 5000);
+</script>
+{% endif %}
+<div class="launch-banner">{{ t('launch.banner', date=t('launch.date_label')) }}</div>
+<header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">Task<span>Pay</span></a>
+    <nav>
+        {% if session.user_id %}
+            {% if session.is_admin %}
+                <a href="{{ url_for('admin_dashboard') }}">{{ t('nav.admin') }}</a>
+            {% else %}
+                <a href="{{ url_for('dashboard') }}">{{ t('nav.dashboard') }}</a>
+                <a href="{{ url_for('referrals') }}">{{ t('nav.referrals') }}</a>
+                <a href="{{ url_for('ads_page') }}">{{ t('nav.ads') }}</a>
+                <a href="{{ url_for('payout_setup') }}">{{ t('nav.payout_account') }}</a>
+                <a href="{{ url_for('settings') }}">{{ t('nav.settings') }}</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">{{ t('nav.logout') }}</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">{{ t('nav.login') }}</a>
+            <a class="cta" href="{{ url_for('register') }}">{{ t('nav.signup') }}</a>
+        {% endif %}
+        <form method="post" action="{{ url_for('set_language', lang='fr' if current_lang == 'en' else 'en') }}" style="display:inline;">
+            <button type="submit" class="lang-toggle">{{ 'FR' if current_lang == 'en' else 'EN' }}</button>
+        </form>
+    </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<div class="sponsor-box">
+    <div class="ad-label">{{ t('ad.sponsored_label') }}</div>
+    <div class="ad-wide" id="ad-box-0"></div>
+</div>
+<div class="sponsor-box">
+    <div class="ad-label">{{ t('ad.sponsored_label') }}</div>
+    <script async="async" data-cfasync="false" src="https://invitationprecedingbreeches.com/47f2b549c9b4cc7339ad9e8c603f4ca5/invoke.js"></script>
+    <div id="container-47f2b549c9b4cc7339ad9e8c603f4ca5"></div>
+</div>
+<div class="sponsor-box">
+    <div class="ad-label">{{ t('ad.sponsored_label') }}</div>
+    <a class="sponsor-link" href="https://invitationprecedingbreeches.com/dfevse1dw?key=49375d179b62e37b2bbe6285bed38043" target="_blank" rel="sponsored noopener noreferrer">{{ t('ad.sponsored_cta') }}</a>
+</div>
+<div id="ad-slot" class="ad-slot" hidden>
+    <div class="ad-label">{{ t('adgate.slot_label') }}</div>
+    <div class="ad-row">
+        <div class="ad-box" id="ad-box-1"></div>
+        <div class="ad-box ad-box-tall" id="ad-box-2"></div>
+    </div>
+</div>
+<footer class="footer">{{ t('footer.tagline') }}</footer>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% if session.lang_chosen %}
+<div id="adult-gate" hidden>
+    <div class="adult-card" role="dialog" aria-modal="true" aria-labelledby="adult-title">
+        <div class="adult-badge">18+</div>
+        <h3 id="adult-title">{{ t('adgate.title') }}</h3>
+        <p>{{ t('adgate.body') }}</p>
+        <p class="adult-age">{{ t('adgate.age') }}</p>
+        <div class="adult-actions">
+            <button type="button" id="adult-yes" class="adult-btn adult-yes">{{ t('adgate.confirm') }}</button>
+            <button type="button" id="adult-no" class="adult-btn">{{ t('adgate.decline') }}</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+<script>
+(function () {
+    var KEY = 'tp_adult_ads';
+    var gate = document.getElementById('adult-gate');   // only present once a language is chosen
+    var slot = document.getElementById('ad-slot');
+
+    function get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+    function set(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+
+    var BASE = 'https://invitationprecedingbreeches.com/';
+    var GENERAL = [
+        {box: 'ad-box-0', key: '9eefdd2346a30fb0d9d47654369cc6cd', width: 468, height: 60}
+    ];
+    var ADULT = [
+        {box: 'ad-box-1', key: '93b17893cbb501ab1f0c28ed30f93058', width: 160, height: 300},
+        {box: 'ad-box-2', key: 'efcad886d6ff3f7955c17048f898f182', width: 160, height: 600}
+    ];
+
+    // One queue for every banner: each invoke.js reads the global atOptions
+    // when it runs, so banners must load strictly one after another.
+    var queue = Promise.resolve();
+    function enqueue(ad) {
+        queue = queue.then(function () {
+            return new Promise(function (resolve) {
+                var box = document.getElementById(ad.box);
+                if (!box) { resolve(); return; }
+                window.atOptions = {
+                    'key': ad.key,
+                    'format': 'iframe',
+                    'height': ad.height,
+                    'width': ad.width,
+                    'params': {}
+                };
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = BASE + ad.key + '/invoke.js';
+                s.onload = s.onerror = resolve;
+                box.appendChild(s);
+                setTimeout(resolve, 8000);   // never let one slow ad block the rest
+            });
+        });
+    }
+
+    // Non-adult banner: no confirmation needed.
+    GENERAL.forEach(enqueue);
+
+    // Adult (18+) banners: only after the visitor confirms.
+    var adultLoaded = false;
+    function loadAdult() {
+        if (adultLoaded || !slot) return;
+        adultLoaded = true;
+        slot.hidden = false;
+        ADULT.forEach(enqueue);
+    }
+    if (!gate) return;
+
+    var choice = get();
+    if (choice === 'yes') {
+        loadAdult();
+    } else if (choice !== 'no') {
+        gate.hidden = false;
+        document.body.classList.add('adult-open');
+    }
+
+    function close() {
+        gate.hidden = true;
+        document.body.classList.remove('adult-open');
+    }
+    document.getElementById('adult-yes').addEventListener('click', function () {
+        set('yes'); close(); loadAdult();
+    });
+    document.getElementById('adult-no').addEventListener('click', function () {
+        set('no'); close();
+    });
+})();
+</script>
+{# ---- Controlled site-wide Monetag ads ----
+   The overlay/full-screen scripts still run site-wide (to keep impressions), but:
+   - never on money/auth/admin pages or the /ads page (that page has its own button)
+   - never on page load: only after the visitor's first tap/click
+   - at most once per AD_COOLDOWN_MIN minutes per browser
+   - while loaded, a "Back" button floats above everything so users can always leave #}
+{% set no_auto_ads = request.endpoint in ['dashboard', 'login', 'register', 'logout', 'forgot_password', 'reset_password', 'confirm_email', 'payout_setup', 'settings', 'admin_dashboard', 'ads_page', 'cpx_wall', 'offerwall', 'set_language'] %}
+{% if session.lang_chosen and not no_auto_ads %}
+{% set ads_back = (url_for('admin_dashboard') if session.is_admin else url_for('dashboard')) if session.user_id else url_for('index') %}
+<a id="ads-escape" class="ads-escape" href="{{ ads_back }}" hidden>{{ t('ads.back') if session.user_id else t('ads.home') }}</a>
+<script>
+(function () {
+    var AD_COOLDOWN_MIN = 3;                 // change to show ads more/less often
+    var KEY = 'tp_last_ad_at';
+    var SCRIPTS = {{ monetag_scripts|tojson }};
+    var fired = false;
+
+    function lastAt() { try { return parseInt(localStorage.getItem(KEY) || '0', 10) || 0; } catch (e) { return 0; } }
+    function stamp() { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} }
+
+    function fire() {
+        if (fired) return;
+        fired = true;
+        cleanup();
+        if (Date.now() - lastAt() < AD_COOLDOWN_MIN * 60 * 1000) return;   // too soon, skip
+        stamp();
+        var esc = document.getElementById('ads-escape');
+        if (esc) esc.hidden = false;
+        SCRIPTS.forEach(function (src) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.async = true;
+            document.body.appendChild(s);
+        });
+    }
+    function cleanup() {
+        ['click', 'touchend', 'keydown'].forEach(function (ev) {
+            document.removeEventListener(ev, fire, true);
+        });
+    }
+    ['click', 'touchend', 'keydown'].forEach(function (ev) {
+        document.addEventListener(ev, fire, true);
+    });
+})();
+</script>
+{% endif %}
+</body>
+</html>
